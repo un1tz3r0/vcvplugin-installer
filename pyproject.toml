@@ -37,10 +37,16 @@ vcvplugin-gui = "vcvplugin.gui:run"
 Homepage = "https://github.com/un1tz3r0/vcvplugin-installer"
 Issues = "https://github.com/un1tz3r0/vcvplugin-installer/issues"
 
-# The version is defined once, in meson.build.
+# The version is defined once, in vcvplugin/VERSION (also read by meson.build and at runtime).
 [tool.hatch.version]
-path = "meson.build"
-pattern = "^\\s*version: '(?P<version>[^']+)'"
+path = "vcvplugin/VERSION"
+pattern = "(?P<version>\\S+)"
 
 [tool.hatch.build.targets.wheel]
 packages = ["vcvplugin"]
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

@@ -1,5 +1,5 @@
 project('vcvplugin-installer',
-  version: '0.1.0',
+  version: files('vcvplugin/VERSION'),
   license: 'GPL-3.0-or-later',
   meson_version: '>= 1.0',
 )
@@ -22,6 +22,7 @@ install_data(
   'vcvplugin/cli.py',
   'vcvplugin/core.py',
   'vcvplugin/gui.py',
+  'vcvplugin/VERSION',
   install_dir: pkgdatadir / 'vcvplugin',
 )
 

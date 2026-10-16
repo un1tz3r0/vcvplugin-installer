@@ -11,10 +11,12 @@ gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 from gi.repository import Adw, Gdk, Gio, GLib, Gtk  # noqa: E402
 
-from . import core  # noqa: E402
+from . import __version__, core  # noqa: E402
 from .core import Action, Level  # noqa: E402
 
 APP_ID = "io.github.un1tz3r0.VcvPluginInstaller"
+APP_NAME = "VCV Rack Plugin Installer"
+WEBSITE = "https://github.com/un1tz3r0/vcvplugin-installer"
 OK_ICON = "object-select-symbolic"
 LEVEL_ICON = {Level.INFO: "dialog-information-symbolic", Level.WARN: "dialog-warning-symbolic",
               Level.ERROR: "dialog-error-symbolic"}
@@ -77,11 +79,15 @@ def page(content: Gtk.Widget, *actions) -> tuple[Gtk.Box, list[Gtk.Button]]:
 
 class Wizard(Adw.ApplicationWindow):
     def __init__(self, app: Adw.Application, paths: list[Path]):
-        super().__init__(application=app, title="VCV Rack Plugin Installer", default_width=600, default_height=660)
+        super().__init__(application=app, title=APP_NAME, default_width=600, default_height=660)
         self.heading = Adw.WindowTitle(title=self.get_title())
         self.stack = Gtk.Stack(transition_type=Gtk.StackTransitionType.SLIDE_LEFT)
         view = Adw.ToolbarView(content=self.stack)
-        view.add_top_bar(Adw.HeaderBar(title_widget=self.heading))
+        header = Adw.HeaderBar(title_widget=self.heading)
+        menu = Gio.Menu()
+        menu.append(f"About {APP_NAME}", "app.about")
+        header.pack_end(Gtk.MenuButton(icon_name="open-menu-symbolic", menu_model=menu, primary=True, tooltip_text="Main Menu"))
+        view.add_top_bar(header)
         view.add_top_bar(Adw.Banner(title="VCV Rack is running. Restart it after installing to load the new plugins.",
                                     revealed=core.rack_running()))
         self.set_content(view)
@@ -248,6 +254,21 @@ class Wizard(Adw.ApplicationWindow):
 class App(Adw.Application):
     def __init__(self):
         super().__init__(application_id=APP_ID, flags=Gio.ApplicationFlags.HANDLES_OPEN)
+
+    def do_startup(self):
+        Adw.Application.do_startup(self)
+        about = Gio.SimpleAction(name="about")
+        about.connect("activate", lambda *_: self.about())
+        self.add_action(about)
+
+    def about(self):
+        props = dict(application_name=APP_NAME, application_icon=APP_ID, developer_name="Victor Condino", version=__version__,
+                     website=WEBSITE, issue_url=f"{WEBSITE}/issues", license_type=Gtk.License.GPL_3_0,
+                     copyright="© 2026 Victor Condino")
+        if hasattr(Adw, "AboutDialog"):  # libadwaita 1.5+
+            Adw.AboutDialog(**props).present(self.get_active_window())
+        else:
+            Adw.AboutWindow(transient_for=self.get_active_window(), **props).present()
 
     def do_activate(self):
         Wizard(self, []).present()

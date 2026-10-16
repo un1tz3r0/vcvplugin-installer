@@ -1,0 +1,43 @@
+name: Release
+
+# Runs when a pull request is merged (or anything is pushed) to main. If vcvplugin/VERSION names a version
+# without a tag yet, tag that commit and publish a GitHub release with the metainfo's notes, sdist and wheel.
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+concurrency: release
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check for an unreleased version
+        id: version
+        run: |
+          version=$(cat vcvplugin/VERSION)
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          if git rev-parse -q --verify "refs/tags/v$version" >/dev/null; then
+            echo "v$version is already released"
+            echo "new=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "new=true" >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.version.outputs.new == 'true'
+        run: build-aux/release-notes.py > release-notes.md
+      - if: steps.version.outputs.new == 'true'
+        uses: astral-sh/setup-uv@v6
+      - if: steps.version.outputs.new == 'true'
+        run: uv build
+      - if: steps.version.outputs.new == 'true'
+        name: Tag and publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: gh release create "v$VERSION" dist/* --target "$GITHUB_SHA" --title "v$VERSION" --notes-file release-notes.md
