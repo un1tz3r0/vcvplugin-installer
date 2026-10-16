@@ -4,7 +4,7 @@ import contextlib
 import sys
 from pathlib import Path
 
-from . import core
+from . import __version__, core
 
 LABEL = {core.Level.INFO: "note", core.Level.WARN: "warning", core.Level.ERROR: "error"}
 
@@ -43,6 +43,7 @@ def main(argv=None) -> int:
     ap.add_argument("-n", "--dry-run", action="store_true", help="only report what would happen")
     ap.add_argument("-q", "--quiet", action="store_true", help="only report problems")
     ap.add_argument("--wait", action="store_true", help="wait for Enter before exiting (for terminal launchers)")
+    ap.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     args = ap.parse_args(argv)
 
     if core.rack_running():

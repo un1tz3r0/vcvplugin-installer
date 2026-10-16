@@ -1,0 +1,82 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    name: Tests (Python ${{ matrix.python }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.11", "3.12", "3.13", "3.14"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv run --python ${{ matrix.python }} pytest -v
+
+  version:
+    name: Version bumped, with release notes
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check that vcvplugin/VERSION has not been released yet
+        run: |
+          version=$(cat vcvplugin/VERSION)
+          if git rev-parse -q --verify "refs/tags/v$version" >/dev/null; then
+            echo "::error file=vcvplugin/VERSION::v$version is already released; bump vcvplugin/VERSION and add a <release> to the metainfo"
+            exit 1
+          fi
+      - name: Check the metainfo has release notes for it
+        run: build-aux/release-notes.py
+
+  meson:
+    name: Meson build, validate and install
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends meson appstream desktop-file-utils \
+            gtk-update-icon-cache shared-mime-info
+      - run: meson setup _build --prefix=/usr
+      - run: meson test -C _build --print-errorlogs
+      - run: meson install -C _build --destdir "$PWD/_install"
+      - name: Run the installed launcher
+        run: PYTHONPATH=_install/usr/share/vcvplugin-installer _install/usr/bin/vcvplugin-install --version
+
+  package:
+    name: sdist and wheel
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  screenshots:
+    name: Screenshots
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends python3-gi gir1.2-gtk-4.0 gir1.2-adw-1 \
+            librsvg2-common xvfb xauth fonts-cantarell adwaita-icon-theme
+      - name: Render (also exercises every page of the GUI)
+        run: xvfb-run -a -s "-screen 0 1280x1024x24" /usr/bin/python3 build-aux/screenshots.py
+        env:
+          GSK_RENDERER: cairo
+      - uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: data/screenshots/

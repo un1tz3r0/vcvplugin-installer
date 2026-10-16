@@ -15,6 +15,8 @@ This installer checks each package first, shows what installing it will do, and 
 
 Open packages from your file manager, or drop several onto the window.
 
+![Reviewing packages before installing them](data/screenshots/review.png)
+
 ## Requirements
 
 - Linux on x86-64 (Rack's `lin-x64` plugins)
@@ -91,6 +93,7 @@ vcvplugin-install [options] PACKAGE.vcvplugin [PACKAGE.vcvplugin ...]
 | `-n`, `--dry-run` | only report what would happen |
 | `-q`, `--quiet` | only report problems |
 | `--wait` | wait for Enter before exiting (for terminal launchers) |
+| `--version` | print the version and exit |
 
 Exit status: `0` all done, `1` some package failed or was rejected, `2` some package was skipped because it needs
 confirmation (see `--yes`), `3` both.
@@ -116,11 +119,31 @@ python3 -m vcvplugin.gui      # GUI
 | `vcvplugin/core.py` | package inspection, comparison and installation (no GUI dependencies) |
 | `vcvplugin/cli.py`, `vcvplugin/gui.py` | command-line and GTK 4 / libadwaita front ends |
 | `data/` | desktop entries, AppStream metainfo, MIME type, icon |
-| `meson.build` | desktop installation; also holds the project version |
-| `pyproject.toml` | Python packaging (sdist/wheel, pip/pipx), version read from `meson.build` |
+| `vcvplugin/VERSION` | the version, read by Meson, hatchling and the app itself |
+| `meson.build` | desktop installation |
+| `pyproject.toml` | Python packaging (sdist/wheel, pip/pipx) |
+| `tests/` | pytest suite for `core` and `cli` |
+| `build-aux/screenshots.py` | renders `data/screenshots/` from a scripted GUI run |
+| `build-aux/release-notes.py` | prints the metainfo release notes for the current version |
 
-When adding a module to `vcvplugin/`, also list it in `meson.build`. Build the sdist and wheel with `uv build`
-or `python3 -m build`.
+```sh
+uv run pytest                                  # tests (or: python3 -m pytest)
+xvfb-run -a python3 build-aux/screenshots.py   # regenerate the screenshots (drop xvfb-run to watch it)
+uv build                                       # sdist and wheel
+```
+
+When adding a module to `vcvplugin/`, also list it in `meson.build`.
+
+### Every pull request bumps the version
+
+1. Bump `vcvplugin/VERSION`.
+2. Add a `<release>` for it, with notes, at the top of `<releases>` in
+   `data/io.github.un1tz3r0.VcvPluginInstaller.metainfo.xml`.
+
+CI fails a pull request whose version is already tagged or has no release notes. When it is merged, the Release
+workflow tags the commit `vX.Y.Z` and publishes a GitHub release with those notes and the sdist and wheel.
+
+CI also renders the screenshots and uploads them as a build artifact; when the UI changes, commit the new ones.
 
 ## License
 
