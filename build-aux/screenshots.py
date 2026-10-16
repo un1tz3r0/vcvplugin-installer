@@ -106,7 +106,9 @@ class ScreenshotApp(gui.App):
         self.status = 1
 
     def do_activate(self):
-        Gtk.Settings.get_default().props.gtk_enable_animations = False
+        settings = Gtk.Settings.get_default()
+        settings.props.gtk_enable_animations = False
+        settings.props.gtk_font_name = "Cantarell 11"
         Gtk.IconTheme.get_for_display(Gdk.Display.get_default()).add_search_path(str(SRC / "data"))
         self.hold()
         GLib.timeout_add_seconds(TIMEOUT, self.fail, f"timed out after {TIMEOUT}s")
