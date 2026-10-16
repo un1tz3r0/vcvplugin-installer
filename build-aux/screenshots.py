@@ -25,11 +25,10 @@ sys.path.insert(0, str(SRC))
 
 import gi  # noqa: E402
 
-gi.require_version("Gdk", "4.0")
 gi.require_version("Graphene", "1.0")
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
-from gi.repository import Gdk, Gio, GLib, Graphene, Gtk  # noqa: E402
+from gi.repository import Adw, Gio, GLib, Graphene, Gtk  # noqa: E402
 
 from vcvplugin import core, gui  # noqa: E402
 
@@ -65,6 +64,13 @@ def shoot(win: Gtk.Window, name: str):
 
 def scenes(app: gui.App):
     """Each yield waits until the condition holds and the window has settled."""
+    for scheme, suffix in ((Adw.ColorScheme.FORCE_LIGHT, ""), (Adw.ColorScheme.FORCE_DARK, "-dark")):
+        Adw.StyleManager.get_default().set_color_scheme(scheme)
+        shutil.rmtree(core.RACK_DIR, ignore_errors=True)
+        yield from scene_set(app, suffix)
+
+
+def scene_set(app: gui.App, suffix: str):
     installed("AcmeOscillators", "2.0.3")
     installed("GranularToys", "2.3.1")
     installed("HexaSequencer", "2.0.1", so=ELF + b"old build")
@@ -79,24 +85,25 @@ def scenes(app: gui.App):
     win = gui.Wizard(app, [])
     win.present()
     yield lambda: win.get_mapped()
-    shoot(win, "choose")
+    shoot(win, "choose" + suffix)
 
     plans = [core.analyze(p) for p in packages]
     win.review(plans)
     yield lambda: win.heading.get_subtitle() == "Review"
-    shoot(win, "review")
+    shoot(win, "review" + suffix)
 
     win.confirm([plans[2]])
     yield lambda: win.heading.get_subtitle() == "Confirm"
-    shoot(win, "confirm")
+    shoot(win, "confirm" + suffix)
 
     win.install(plans[:2])
     yield lambda: win.heading.get_subtitle() == "Done"
-    shoot(win, "done")
+    shoot(win, "done" + suffix)
 
     app.about()
     yield None
-    shoot(win, "about")
+    shoot(win, "about" + suffix)
+    win.destroy()
 
 
 class ScreenshotApp(gui.App):
@@ -109,7 +116,6 @@ class ScreenshotApp(gui.App):
         settings = Gtk.Settings.get_default()
         settings.props.gtk_enable_animations = False
         settings.props.gtk_font_name = "Cantarell 11"
-        Gtk.IconTheme.get_for_display(Gdk.Display.get_default()).add_search_path(str(SRC / "data"))
         self.hold()
         GLib.timeout_add_seconds(TIMEOUT, self.fail, f"timed out after {TIMEOUT}s")
         self.resume(scenes(self))
@@ -136,8 +142,17 @@ class ScreenshotApp(gui.App):
         GLib.timeout_add(100, poll)
 
 
+def install_icons():
+    """Put the app icons in the hicolor theme: GTK only recolors symbolic icons that come from a theme."""
+    icons = Path(os.environ["XDG_DATA_HOME"]) / "icons" / "hicolor"
+    for name, size in (("io.github.un1tz3r0.VcvPluginInstaller", "scalable"), ("io.github.un1tz3r0.VcvPluginInstaller-symbolic", "symbolic")):
+        (icons / size / "apps").mkdir(parents=True, exist_ok=True)
+        shutil.copy(SRC / "data" / f"{name}.svg", icons / size / "apps")
+
+
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
+    install_icons()
     core.rack_running = lambda: False
     core.find_rack = lambda: HOME / "Rack2Free" / "Rack"
     try:

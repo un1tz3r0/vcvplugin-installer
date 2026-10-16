@@ -7,6 +7,7 @@ project('vcvplugin-installer',
 app_id = 'io.github.un1tz3r0.VcvPluginInstaller'
 mime_type = 'application/x-vcvplugin'
 
+i18n = import('i18n')
 python = import('python').find_installation('python3')
 if not python.language_version().version_compare('>= 3.11')
   error('Python 3.11 or newer is required, found ' + python.language_version())
@@ -38,6 +39,7 @@ foreach launcher : [['vcvplugin-install', 'cli'], ['vcvplugin-gui', 'gui']]
 endforeach
 
 subdir('data')
+subdir('po')
 
 import('gnome').post_install(
   gtk_update_icon_cache: true,

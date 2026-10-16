@@ -1,0 +1,25 @@
+id: io.github.un1tz3r0.VcvPluginInstaller
+runtime: org.gnome.Platform
+runtime-version: '51'
+sdk: org.gnome.Sdk
+command: vcvplugin-gui
+finish-args:
+  - --share=ipc
+  - --socket=fallback-x11
+  - --socket=wayland
+  - --device=dri
+  # Rack's user folder, where the plugins are installed
+  - --filesystem=xdg-data/Rack2:create
+  # Rack runs on the host: check whether it is running, find it and start it with flatpak-spawn --host
+  - --talk-name=org.freedesktop.Flatpak
+modules:
+  - name: vcvplugin-installer
+    buildsystem: meson
+    sources:
+      - type: dir
+        path: ../..
+        skip:
+          - .venv
+          - _build
+          - _inst
+          - dist

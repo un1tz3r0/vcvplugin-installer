@@ -1,0 +1,603 @@
+# German translation of vcvplugin-installer.
+# This file is distributed under the same license as the vcvplugin-installer package.
+#
+# Drafted without a native-speaker review; corrections are welcome.
+msgid ""
+msgstr ""
+"Project-Id-Version: vcvplugin-installer\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-16 17:34+0000\n"
+"PO-Revision-Date: 2026-10-16 17:30+0000\n"
+"Language-Team: German\n"
+"Language: de\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: data/io.github.un1tz3r0.VcvPluginInstaller.desktop.in:4
+#: data/io.github.un1tz3r0.VcvPluginInstaller.metainfo.xml:7
+#: vcvplugin/gui.py:17
+msgid "VCV Rack Plugin Installer"
+msgstr "VCV-Rack-Plugin-Installer"
+
+#: data/io.github.un1tz3r0.VcvPluginInstaller.desktop.in:5
+#: data/io.github.un1tz3r0.VcvPluginInstaller.metainfo.xml:8
+msgid "Install and upgrade VCV Rack 2 plugin packages"
+msgstr "Plugin-Pakete für VCV Rack 2 installieren und aktualisieren"
+
+#: data/io.github.un1tz3r0.VcvPluginInstaller.desktop.in:11
+msgid "VCV;Rack;plugin;modular;"
+msgstr "VCV;Rack;Plugin;Erweiterung;Modular;Synthesizer;"
+
+#: data/io.github.un1tz3r0.VcvPluginInstaller.metainfo.xml:14
+msgid ""
+"VCV Rack 2 unpacks .vcvplugin packages from its plugins folder the next time "
+"it starts, without saying what changed. This installer checks each package "
+"first, shows what installing it will do, and unpacks it right away."
+msgstr ""
+"VCV Rack 2 entpackt .vcvplugin-Pakete aus seinem Plugin-Ordner erst beim "
+"nächsten Start und zeigt nicht an, was sich geändert hat. Dieses "
+"Installationsprogramm prüft jedes Paket vorab, zeigt, was die Installation "
+"bewirkt, und entpackt es sofort."
+
+#: data/io.github.un1tz3r0.VcvPluginInstaller.metainfo.xml:20
+msgid ""
+"Rejects packages built for another operating system or CPU, or without a "
+"valid plugin.json"
+msgstr ""
+"Lehnt Pakete ab, die für ein anderes Betriebssystem oder einen anderen "
+"Prozessor gebaut sind oder keine gültige plugin.json enthalten"
+
+#: data/io.github.un1tz3r0.VcvPluginInstaller.metainfo.xml:21
+msgid "Shows whether each package is a new install, an upgrade or a downgrade"
+msgstr ""
+"Zeigt für jedes Paket, ob es neu installiert, aktualisiert oder herabgestuft "
+"wird"
+
+#: data/io.github.un1tz3r0.VcvPluginInstaller.metainfo.xml:22
+msgid "Warns when the same version is already installed with different files"
+msgstr ""
+"Warnt, wenn dieselbe Version bereits mit anderen Dateien installiert ist"
+
+#: data/io.github.un1tz3r0.VcvPluginInstaller.metainfo.xml:23
+msgid "Replaces older packages that are still waiting for Rack to unpack them"
+msgstr ""
+"Ersetzt ältere Pakete, die noch darauf warten, von Rack entpackt zu werden"
+
+#: data/io.github.un1tz3r0.VcvPluginInstaller.metainfo.xml:25
+msgid ""
+"Plugins are unpacked into a staging folder and then swapped into place, so "
+"an interrupted install does not leave a half-written plugin behind. The "
+"vcvplugin-install command does the same from a terminal."
+msgstr ""
+"Plugins werden zunächst in einen Zwischenordner entpackt und dann an ihren "
+"Platz verschoben, sodass eine unterbrochene Installation kein halb "
+"geschriebenes Plugin hinterlässt. Der Befehl vcvplugin-install macht "
+"dasselbe im Terminal."
+
+#: data/io.github.un1tz3r0.VcvPluginInstaller.metainfo.xml:62
+#: data/io.github.un1tz3r0.VcvPluginInstaller.metainfo.xml:66
+msgid "Review what installing each package will do"
+msgstr "Prüfen, was die Installation jedes Pakets bewirkt"
+
+#: data/io.github.un1tz3r0.VcvPluginInstaller.metainfo.xml:70
+#: data/io.github.un1tz3r0.VcvPluginInstaller.metainfo.xml:74
+msgid "Confirm downgrades and same-version rebuilds"
+msgstr "Herabstufungen und Neubauten derselben Version bestätigen"
+
+#: data/io.github.un1tz3r0.VcvPluginInstaller.metainfo.xml:78
+#: data/io.github.un1tz3r0.VcvPluginInstaller.metainfo.xml:82
+msgid "Installed plugins, ready to start VCV Rack"
+msgstr "Installierte Plugins, bereit zum Start von VCV Rack"
+
+#: data/io.github.un1tz3r0.VcvPluginInstaller.Terminal.desktop.in:4
+msgid "Install VCV Rack Plugin (Terminal)"
+msgstr "VCV-Rack-Plugin installieren (Terminal)"
+
+#: data/io.github.un1tz3r0.VcvPluginInstaller.Terminal.desktop.in:5
+msgid "Install VCV Rack 2 plugin packages in a terminal"
+msgstr "Plugin-Pakete für VCV Rack 2 in einem Terminal installieren"
+
+#: vcvplugin/cli.py:9
+#, python-brace-format
+msgid "note: {text}"
+msgstr "Hinweis: {text}"
+
+#: vcvplugin/cli.py:9
+#, python-brace-format
+msgid "warning: {text}"
+msgstr "Warnung: {text}"
+
+#: vcvplugin/cli.py:9 vcvplugin/cli.py:81 vcvplugin/gui.py:222
+#, python-brace-format
+msgid "error: {text}"
+msgstr "Fehler: {text}"
+
+#: vcvplugin/cli.py:13
+msgid "rejected"
+msgstr "abgelehnt"
+
+#: vcvplugin/cli.py:18
+#, python-brace-format
+msgid "files: {diff}"
+msgstr "Dateien: {diff}"
+
+#. Translators: the answers ask() accepts as yes, separated by |
+#: vcvplugin/cli.py:23
+msgid "y|yes"
+msgstr "j|ja|y|yes"
+
+#: vcvplugin/cli.py:25
+#, python-brace-format
+msgid "{question} [y/N]"
+msgstr "{question} [j/N]"
+
+#: vcvplugin/cli.py:36
+msgid "Install VCV Rack 2 .vcvplugin packages from the command line."
+msgstr ".vcvplugin-Pakete für VCV Rack 2 auf der Befehlszeile installieren."
+
+#: vcvplugin/cli.py:37
+msgid ""
+"exit status: 0 all done, 1 some package failed or was rejected,\n"
+"2 some package was skipped because it needs confirmation (see --yes), 3 both"
+msgstr ""
+"Rückgabewert: 0 alles erledigt, 1 ein Paket ist fehlgeschlagen oder wurde "
+"abgelehnt,\n"
+"2 ein Paket wurde übersprungen, weil es eine Bestätigung braucht (siehe --"
+"yes), 3 beides"
+
+#: vcvplugin/cli.py:41
+msgid "proceed past warnings (downgrades, same-version rebuilds, ...)"
+msgstr ""
+"trotz Warnungen fortfahren (Herabstufungen, Neubauten derselben Version, …)"
+
+#: vcvplugin/cli.py:42
+msgid "ask before proceeding past warnings"
+msgstr "vor dem Fortfahren trotz Warnungen nachfragen"
+
+#: vcvplugin/cli.py:43
+msgid "install even when the identical version is already installed"
+msgstr "auch installieren, wenn die identische Version bereits installiert ist"
+
+#: vcvplugin/cli.py:44
+msgid ""
+"copy the package for Rack to unpack on its next start instead of unpacking "
+"now"
+msgstr ""
+"das Paket nur kopieren, damit Rack es beim nächsten Start entpackt, statt es "
+"jetzt zu entpacken"
+
+#: vcvplugin/cli.py:45
+msgid "only report what would happen"
+msgstr "nur berichten, was geschehen würde"
+
+#: vcvplugin/cli.py:46
+msgid "only report problems"
+msgstr "nur Probleme melden"
+
+#: vcvplugin/cli.py:47
+msgid "wait for Enter before exiting (for terminal launchers)"
+msgstr "vor dem Beenden auf die Eingabetaste warten (für Terminal-Starter)"
+
+#: vcvplugin/cli.py:56
+msgid "warning: VCV Rack is running; restart it to load installed plugins"
+msgstr ""
+"Warnung: VCV Rack läuft; starten Sie es neu, um installierte Plugins zu laden"
+
+#: vcvplugin/cli.py:67
+#, python-brace-format
+msgid "Install {plugin} {version} anyway?"
+msgstr "{plugin} {version} trotzdem installieren?"
+
+#: vcvplugin/cli.py:69
+msgid "skipped (pass --yes to proceed past warnings)"
+msgstr "übersprungen (mit --yes trotz Warnungen fortfahren)"
+
+#: vcvplugin/cli.py:73
+#, python-brace-format
+msgid "would copy into {folder}"
+msgstr "würde nach {folder} kopieren"
+
+#: vcvplugin/cli.py:73
+#, python-brace-format
+msgid "would unpack into {folder}"
+msgstr "würde nach {folder} entpacken"
+
+#: vcvplugin/cli.py:87
+#, python-brace-format
+msgid "installed {version} → {path}"
+msgstr "{version} installiert → {path}"
+
+#: vcvplugin/cli.py:90
+msgid "Press Enter to close…"
+msgstr "Zum Schließen die Eingabetaste drücken …"
+
+#: vcvplugin/core.py:54
+msgid "new install"
+msgstr "Neuinstallation"
+
+#: vcvplugin/core.py:55
+msgid "upgrade"
+msgstr "Aktualisierung"
+
+#: vcvplugin/core.py:56
+msgid "downgrade"
+msgstr "Herabstufung"
+
+#: vcvplugin/core.py:57
+msgid "already installed"
+msgstr "bereits installiert"
+
+#: vcvplugin/core.py:58
+msgid "same version, different files"
+msgstr "gleiche Version, andere Dateien"
+
+#: vcvplugin/core.py:88
+msgid ""
+"zstd archives need Python 3.14+, the 'zstandard' module or the zstd command"
+msgstr ""
+"zstd-Archive benötigen Python 3.14+, das Modul »zstandard« oder den Befehl "
+"zstd"
+
+#: vcvplugin/core.py:90
+#, python-brace-format
+msgid "zstd: {error}"
+msgstr "zstd: {error}"
+
+#: vcvplugin/core.py:113
+#, python-brace-format
+msgid "unreadable archive: {error}"
+msgstr "unlesbares Archiv: {error}"
+
+#: vcvplugin/core.py:144
+msgid "not a zip, tar or tar.zst archive"
+msgstr "kein zip-, tar- oder tar.zst-Archiv"
+
+#: vcvplugin/core.py:154
+#, python-brace-format
+msgid "unsafe path in archive: {name}"
+msgstr "unsicherer Pfad im Archiv: {name}"
+
+#: vcvplugin/core.py:158
+#, python-brace-format
+msgid "unsupported archive entry (link or device): {name}"
+msgstr "nicht unterstützter Archiveintrag (Verknüpfung oder Gerät): {name}"
+
+#: vcvplugin/core.py:170
+msgid "no plugin.json in package"
+msgstr "keine plugin.json im Paket"
+
+#: vcvplugin/core.py:179
+#, python-brace-format
+msgid "plugin.json is not valid JSON: {error}"
+msgstr "plugin.json ist kein gültiges JSON: {error}"
+
+#: vcvplugin/core.py:182
+msgid "plugin.json has an invalid or missing slug: {slug!r}"
+msgstr "plugin.json hat einen ungültigen oder fehlenden Slug: {slug!r}"
+
+#: vcvplugin/core.py:184
+msgid "plugin.json has an invalid or missing version: {version!r}"
+msgstr "plugin.json hat eine ungültige oder fehlende Version: {version!r}"
+
+#: vcvplugin/core.py:201
+#, python-brace-format
+msgid "contains {file}: this package is built for another operating system"
+msgstr "enthält {file}: Dieses Paket ist für ein anderes Betriebssystem gebaut"
+
+#: vcvplugin/core.py:203
+msgid "package has no plugin.so"
+msgstr "Paket enthält keine plugin.so"
+
+#: vcvplugin/core.py:207
+msgid "plugin.so is not an ELF shared library"
+msgstr "plugin.so ist keine gemeinsam genutzte ELF-Bibliothek"
+
+#: vcvplugin/core.py:209
+#, python-brace-format
+msgid ""
+"plugin.so is built for another CPU (ELF machine {machine:#x}, need x86-64)"
+msgstr ""
+"plugin.so ist für einen anderen Prozessor gebaut (ELF-Maschine {machine:#x}, "
+"benötigt wird x86-64)"
+
+#: vcvplugin/core.py:287
+#, python-brace-format
+msgid "{n} file changed"
+msgid_plural "{n} files changed"
+msgstr[0] "{n} Datei geändert"
+msgstr[1] "{n} Dateien geändert"
+
+#: vcvplugin/core.py:288
+#, python-brace-format
+msgid "{n} file added"
+msgid_plural "{n} files added"
+msgstr[0] "{n} Datei hinzugefügt"
+msgstr[1] "{n} Dateien hinzugefügt"
+
+#: vcvplugin/core.py:289
+#, python-brace-format
+msgid "{n} file removed"
+msgid_plural "{n} files removed"
+msgstr[0] "{n} Datei entfernt"
+msgstr[1] "{n} Dateien entfernt"
+
+#: vcvplugin/core.py:297
+msgid "identical"
+msgstr "identisch"
+
+#: vcvplugin/core.py:345
+#, python-brace-format
+msgid "built for {arch}, this system needs {need}"
+msgstr "gebaut für {arch}, dieses System benötigt {need}"
+
+#: vcvplugin/core.py:352
+msgid "top-level folder {folder!r}"
+msgstr "oberster Ordner {folder!r}"
+
+#: vcvplugin/core.py:352
+msgid "no top-level folder"
+msgstr "keinen obersten Ordner"
+
+#: vcvplugin/core.py:354
+#, python-brace-format
+msgid "package has {layout}; Rack would not unpack it into {slug}/"
+msgstr "Paket hat {layout}; Rack würde es nicht nach {slug}/ entpacken"
+
+#: vcvplugin/core.py:356
+#, python-brace-format
+msgid "package has {layout}; it will be installed into {slug}/"
+msgstr "Paket hat {layout}; es wird nach {slug}/ installiert"
+
+#: vcvplugin/core.py:363
+#, python-brace-format
+msgid "file name does not follow <slug>-<version>-{arch}.vcvplugin"
+msgstr "Dateiname folgt nicht dem Muster <slug>-<version>-{arch}.vcvplugin"
+
+#: vcvplugin/core.py:365
+#, python-brace-format
+msgid ""
+"file name says {name_slug} {name_version} but plugin.json says {slug} "
+"{version}"
+msgstr ""
+"Dateiname nennt {name_slug} {name_version}, aber plugin.json nennt {slug} "
+"{version}"
+
+#: vcvplugin/core.py:368
+#, python-brace-format
+msgid ""
+"version {version} does not start with {major}.; Rack {major} will refuse to "
+"load it"
+msgstr ""
+"Version {version} beginnt nicht mit {major}.; Rack {major} wird sie nicht "
+"laden"
+
+#: vcvplugin/core.py:375
+#, python-brace-format
+msgid ""
+"{n} package for {slug} is waiting for Rack to unpack it; it will be replaced"
+msgid_plural ""
+"{n} packages for {slug} are waiting for Rack to unpack them; all will be "
+"replaced"
+msgstr[0] ""
+"{n} Paket für {slug} wartet darauf, von Rack entpackt zu werden; es wird "
+"ersetzt"
+msgstr[1] ""
+"{n} Pakete für {slug} warten darauf, von Rack entpackt zu werden; alle "
+"werden ersetzt"
+
+#: vcvplugin/core.py:379
+#, python-brace-format
+msgid "replaces {file}, which was waiting for Rack to unpack it"
+msgstr "ersetzt {file}, das darauf wartete, von Rack entpackt zu werden"
+
+#: vcvplugin/core.py:382
+#, python-brace-format
+msgid ""
+"installed {slug} is a symlink to {target} (a development checkout?); it will "
+"be replaced"
+msgstr ""
+"installiertes {slug} ist eine symbolische Verknüpfung auf {target} (ein "
+"Entwicklungsstand?); es wird ersetzt"
+
+#: vcvplugin/core.py:389
+#, python-brace-format
+msgid "existing {path} has no readable version; it will be replaced"
+msgstr "vorhandenes {path} hat keine lesbare Version; es wird ersetzt"
+
+#: vcvplugin/core.py:397
+#, python-brace-format
+msgid "downgrade: installed version {installed} is newer than {version}"
+msgstr "Herabstufung: Installierte Version {installed} ist neuer als {version}"
+
+#: vcvplugin/core.py:401
+#, python-brace-format
+msgid ""
+"version {version} is already installed but the files differ ({diff}); forgot "
+"to bump the version?"
+msgstr ""
+"Version {version} ist bereits installiert, aber die Dateien unterscheiden "
+"sich ({diff}); wurde vergessen, die Versionsnummer zu erhöhen?"
+
+#: vcvplugin/core.py:404
+#, python-brace-format
+msgid "{slug} {version} is already installed with identical files"
+msgstr "{slug} {version} ist bereits mit identischen Dateien installiert"
+
+#: vcvplugin/core.py:429
+#, python-brace-format
+msgid "{file} changed since it was inspected"
+msgstr "{file} hat sich seit der Prüfung geändert"
+
+#: vcvplugin/gui.py:86
+#, python-brace-format
+msgid "About {app}"
+msgstr "Info zu {app}"
+
+#: vcvplugin/gui.py:87
+msgid "Main Menu"
+msgstr "Hauptmenü"
+
+#: vcvplugin/gui.py:89
+msgid ""
+"VCV Rack is running. Restart it after installing to load the new plugins."
+msgstr ""
+"VCV Rack läuft. Starten Sie es nach der Installation neu, um die neuen "
+"Plugins zu laden."
+
+#: vcvplugin/gui.py:110
+msgid "Install VCV Rack Plugins"
+msgstr "VCV-Rack-Plugins installieren"
+
+#: vcvplugin/gui.py:110
+msgid "Choose .vcvplugin packages, or drop them here."
+msgstr "Wählen Sie .vcvplugin-Pakete aus oder legen Sie sie hier ab."
+
+#: vcvplugin/gui.py:114
+msgid "Choose packages"
+msgstr "Pakete auswählen"
+
+#: vcvplugin/gui.py:114
+msgid "Choose Packages…"
+msgstr "Pakete auswählen …"
+
+#: vcvplugin/gui.py:117
+msgid "VCV Rack plugin packages"
+msgstr "VCV-Rack-Plugin-Pakete"
+
+#: vcvplugin/gui.py:121
+msgid "Choose Plugin Packages"
+msgstr "Plugin-Pakete auswählen"
+
+#: vcvplugin/gui.py:137
+msgid "Inspecting"
+msgstr "Prüfen"
+
+#: vcvplugin/gui.py:137
+msgid "Inspecting Packages…"
+msgstr "Pakete werden geprüft …"
+
+#: vcvplugin/gui.py:142
+msgid "Cannot Install"
+msgstr "Installation nicht möglich"
+
+#: vcvplugin/gui.py:156
+msgid "Packages"
+msgstr "Pakete"
+
+#: vcvplugin/gui.py:156
+#, python-brace-format
+msgid "Installing into {folder}"
+msgstr "Installation nach {folder}"
+
+#: vcvplugin/gui.py:157
+msgid "Cancel"
+msgstr "Abbrechen"
+
+#: vcvplugin/gui.py:158
+msgid "Install"
+msgstr "Installieren"
+
+#: vcvplugin/gui.py:166
+msgid "Review"
+msgstr "Überprüfen"
+
+#: vcvplugin/gui.py:175
+msgid "Nothing Installed"
+msgstr "Nichts installiert"
+
+#: vcvplugin/gui.py:175
+msgid "Every package was skipped."
+msgstr "Alle Pakete wurden übersprungen."
+
+#: vcvplugin/gui.py:177
+#, python-brace-format
+msgid "Downgrade {plugin}?"
+msgstr "{plugin} herabstufen?"
+
+#: vcvplugin/gui.py:178
+#, python-brace-format
+msgid "Overwrite {plugin} {version}?"
+msgstr "{plugin} {version} überschreiben?"
+
+#: vcvplugin/gui.py:178
+#, python-brace-format
+msgid "Install {plugin} Anyway?"
+msgstr "{plugin} trotzdem installieren?"
+
+#: vcvplugin/gui.py:181
+msgid "Confirm"
+msgstr "Bestätigen"
+
+#: vcvplugin/gui.py:181
+msgid "Skip"
+msgstr "Überspringen"
+
+#: vcvplugin/gui.py:182
+msgid "Install Anyway"
+msgstr "Trotzdem installieren"
+
+#: vcvplugin/gui.py:191
+#, python-brace-format
+msgid "Installing {n} plugin"
+msgid_plural "Installing {n} plugins"
+msgstr[0] "{n} Plugin wird installiert"
+msgstr[1] "{n} Plugins werden installiert"
+
+#: vcvplugin/gui.py:195
+msgid "Installing"
+msgstr "Installation"
+
+#: vcvplugin/gui.py:231
+msgid "Installation Failed"
+msgstr "Installation fehlgeschlagen"
+
+#: vcvplugin/gui.py:231
+msgid "No plugins were installed."
+msgstr "Es wurden keine Plugins installiert."
+
+#: vcvplugin/gui.py:233
+msgid "Plugin Installed"
+msgid_plural "Plugins Installed"
+msgstr[0] "Plugin installiert"
+msgstr[1] "Plugins installiert"
+
+#: vcvplugin/gui.py:234
+msgid "Restart VCV Rack to load the new plugins."
+msgstr "Starten Sie VCV Rack neu, um die neuen Plugins zu laden."
+
+#: vcvplugin/gui.py:234
+msgid "Start VCV Rack to use the new plugins."
+msgstr "Starten Sie VCV Rack, um die neuen Plugins zu verwenden."
+
+#: vcvplugin/gui.py:241
+msgid "Failed"
+msgstr "Fehlgeschlagen"
+
+#: vcvplugin/gui.py:241 vcvplugin/gui.py:249
+msgid "Done"
+msgstr "Fertig"
+
+#: vcvplugin/gui.py:242 vcvplugin/gui.py:244
+msgid "Close"
+msgstr "Schließen"
+
+#: vcvplugin/gui.py:244
+msgid "Start Rack2"
+msgstr "Rack2 starten"
+
+#: vcvplugin/gui.py:247
+msgid "VCV Rack is already running"
+msgstr "VCV Rack läuft bereits"
+
+#: vcvplugin/gui.py:248
+msgid "Rack executable not found; set RACK_EXECUTABLE or put Rack on PATH"
+msgstr ""
+"Rack-Programm nicht gefunden; setzen Sie RACK_EXECUTABLE oder nehmen Sie "
+"Rack in PATH auf"
+
+#. Translators: your name, and optionally your email address, one translator per line
+#: vcvplugin/gui.py:271
+msgid "translator-credits"
+msgstr ""

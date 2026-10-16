@@ -1,7 +1,8 @@
 name: Release
 
 # Runs when a pull request is merged (or anything is pushed) to main. If vcvplugin/VERSION names a version
-# without a tag yet, tag that commit and publish a GitHub release with the metainfo's notes, sdist and wheel.
+# without a tag yet, tag that commit and publish a GitHub release with the metainfo's notes, the sdist, the wheel
+# and a Flatpak bundle.
 on:
   push:
     branches: [main]
@@ -12,14 +13,17 @@ permissions:
 concurrency: release
 
 jobs:
-  release:
+  version:
+    name: Check for an unreleased version
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      new: ${{ steps.version.outputs.new }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Check for an unreleased version
-        id: version
+      - id: version
         run: |
           version=$(cat vcvplugin/VERSION)
           echo "version=$version" >> "$GITHUB_OUTPUT"
@@ -29,15 +33,42 @@ jobs:
           else
             echo "new=true" >> "$GITHUB_OUTPUT"
           fi
-      - if: steps.version.outputs.new == 'true'
-        run: build-aux/release-notes.py > release-notes.md
-      - if: steps.version.outputs.new == 'true'
-        uses: astral-sh/setup-uv@v6
-      - if: steps.version.outputs.new == 'true'
-        run: uv build
-      - if: steps.version.outputs.new == 'true'
-        name: Tag and publish
-        env:
+
+  flatpak:
+    name: Flatpak bundle
+    needs: version
+    if: needs.version.outputs.new == 'true'
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/flathub-infra/flatpak-github-actions:gnome-51
+      options: --privileged
+    steps:
+      - uses: actions/checkout@v4
+      - uses: flathub-infra/flatpak-github-actions/flatpak-builder@933e9e8ca36e85046ebca8e211f0785c6becac40  # master
+        with:
+          manifest-path: build-aux/flatpak/io.github.un1tz3r0.VcvPluginInstaller.yml
+          bundle: vcvplugin-installer-${{ needs.version.outputs.version }}.flatpak
+          upload-artifact: false
+          cache: false
+      - uses: actions/upload-artifact@v4
+        with:
+          name: flatpak
+          path: vcvplugin-installer-${{ needs.version.outputs.version }}.flatpak
+
+  release:
+    name: Tag and publish
+    needs: [version, flatpak]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: build-aux/release-notes.py > release-notes.md
+      - uses: astral-sh/setup-uv@v6
+      - run: uv build
+      - uses: actions/download-artifact@v4
+        with:
+          name: flatpak
+          path: dist/
+      - env:
           GH_TOKEN: ${{ github.token }}
-          VERSION: ${{ steps.version.outputs.version }}
+          VERSION: ${{ needs.version.outputs.version }}
         run: gh release create "v$VERSION" dist/* --target "$GITHUB_SHA" --title "v$VERSION" --notes-file release-notes.md

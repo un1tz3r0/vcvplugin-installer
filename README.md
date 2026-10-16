@@ -15,7 +15,10 @@ This installer checks each package first, shows what installing it will do, and 
 
 Open packages from your file manager, or drop several onto the window.
 
-![Reviewing packages before installing them](data/screenshots/review.png)
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="data/screenshots/review-dark.png">
+  <img alt="Reviewing packages before installing them" src="data/screenshots/review.png">
+</picture>
 
 ## Requirements
 
@@ -23,14 +26,35 @@ Open packages from your file manager, or drop several onto the window.
 - Python 3.11 or newer
 - For the GUI: PyGObject with GTK 4.10+ and libadwaita 1.4+
 - For Rack 2 packages, which are `tar.zst`: Python 3.14+, the `zstandard` module, or the `zstd` command
+- To install with Meson: Meson and gettext
 
 | Distribution  | Command |
 |---------------|---------|
-| Debian/Ubuntu | `sudo apt install python3-gi gir1.2-gtk-4.0 gir1.2-adw-1 zstd meson` |
-| Fedora        | `sudo dnf install python3-gobject gtk4 libadwaita zstd meson` |
-| Arch          | `sudo pacman -S python-gobject gtk4 libadwaita zstd meson` |
+| Debian/Ubuntu | `sudo apt install python3-gi gir1.2-gtk-4.0 gir1.2-adw-1 zstd meson gettext` |
+| Fedora        | `sudo dnf install python3-gobject gtk4 libadwaita zstd meson gettext` |
+| Arch          | `sudo pacman -S python-gobject gtk4 libadwaita zstd meson gettext` |
+
+The Flatpak needs none of these.
 
 ## Installation
+
+### Flatpak
+
+Each [release](https://github.com/un1tz3r0/vcvplugin-installer/releases) has a Flatpak bundle. Download it and run:
+
+```sh
+flatpak install --user vcvplugin-installer-*.flatpak
+```
+
+This registers the GUI for `.vcvplugin` files; the CLI is
+`flatpak run --command=vcvplugin-install io.github.un1tz3r0.VcvPluginInstaller`. To build it yourself:
+
+```sh
+flatpak-builder --user --install --force-clean _flatpak build-aux/flatpak/io.github.un1tz3r0.VcvPluginInstaller.yml
+```
+
+The sandbox can write only to Rack's default user folder, `~/.local/share/Rack2`. Rack runs outside the sandbox, so
+the app uses `flatpak-spawn --host` to tell whether Rack is running and to find and start it.
 
 ### For your user (GUI and CLI)
 
@@ -53,7 +77,7 @@ sudo meson install -C _build
 ```
 
 Meson installs the launchers to `bin/`, the Python package to `share/vcvplugin-installer/`, and the desktop entry,
-AppStream metainfo, MIME type and icons to the usual places under `share/`. It doesn't set the default handler, so
+AppStream metainfo, MIME type, icons, translations and man page to the usual places under `share/`. It doesn't set the default handler, so
 to choose it over the terminal variant, run:
 
 ```sh
@@ -67,8 +91,8 @@ pipx install 'vcvplugin-installer[zstd] @ git+https://github.com/un1tz3r0/vcvplu
 ```
 
 The `[zstd]` extra adds the `zstandard` module on Python < 3.14. `vcvplugin-gui` is installed too, but needs
-PyGObject: pass `--system-site-packages` to pipx to use your distribution's. This route installs no desktop entry
-or file association.
+PyGObject: pass `--system-site-packages` to pipx to use your distribution's. This route installs no desktop entry,
+file association, translations or man page.
 
 ## Usage
 
@@ -79,6 +103,8 @@ inspects the packages, lets you pick which to install, asks before installing an
 then shows the progress.
 
 ### Command line
+
+See `man vcvplugin-install` for the details.
 
 ```
 vcvplugin-install [options] PACKAGE.vcvplugin [PACKAGE.vcvplugin ...]
@@ -102,7 +128,7 @@ confirmation (see `--yes`), `3` both.
 
 | Variable | Default | |
 |---|---|---|
-| `RACK_USER_DIR` | `~/.local/share/Rack2` | Rack user folder; plugins go into its `plugins-lin-x64/` |
+| `RACK_USER_DIR` | `~/.local/share/Rack2` | Rack user folder; plugins go into its `plugins-lin-x64/` (the Flatpak can only use the default) |
 | `RACK_EXECUTABLE` | `Rack` on `PATH`, else `~/Rack2*/Rack`, `/opt/Rack2*/Rack`, … | used by the GUI's *Start Rack2* button |
 
 ## Development
@@ -118,7 +144,9 @@ python3 -m vcvplugin.gui      # GUI
 |---|---|
 | `vcvplugin/core.py` | package inspection, comparison and installation (no GUI dependencies) |
 | `vcvplugin/cli.py`, `vcvplugin/gui.py` | command-line and GTK 4 / libadwaita front ends |
-| `data/` | desktop entries, AppStream metainfo, MIME type, icon |
+| `data/` | desktop entries, AppStream metainfo, MIME type, icons, man page |
+| `po/` | translations |
+| `build-aux/flatpak/` | Flatpak manifest |
 | `vcvplugin/VERSION` | the version, read by Meson, hatchling and the app itself |
 | `meson.build` | desktop installation |
 | `pyproject.toml` | Python packaging (sdist/wheel, pip/pipx) |

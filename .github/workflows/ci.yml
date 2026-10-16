@@ -51,7 +51,7 @@ jobs:
       - uses: actions/checkout@v4
       - run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends meson appstream desktop-file-utils \
+          sudo apt-get install -y --no-install-recommends meson gettext appstream desktop-file-utils \
             gtk-update-icon-cache shared-mime-info
       - run: meson setup _build --prefix=/usr
       - run: meson test -C _build --print-errorlogs
@@ -88,3 +88,17 @@ jobs:
         with:
           name: screenshots
           path: data/screenshots/
+
+  flatpak:
+    name: Flatpak
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/flathub-infra/flatpak-github-actions:gnome-51
+      options: --privileged
+    steps:
+      - uses: actions/checkout@v4
+      - uses: flathub-infra/flatpak-github-actions/flatpak-builder@933e9e8ca36e85046ebca8e211f0785c6becac40  # master
+        with:
+          manifest-path: build-aux/flatpak/io.github.un1tz3r0.VcvPluginInstaller.yml
+          bundle: vcvplugin-installer.flatpak
+          cache-key: flatpak-builder-${{ github.sha }}

@@ -24,6 +24,7 @@ if [[ ${1:-} == --uninstall ]]; then
 fi
 
 have meson || { echo "meson not found; install meson (it brings ninja), e.g. sudo apt install meson" >&2; exit 1; }
+have msgfmt || { echo "msgfmt not found; install gettext, e.g. sudo apt install gettext" >&2; exit 1; }
 python3 - <<'EOF'
 import sys
 if sys.version_info < (3, 11):

@@ -21,6 +21,8 @@ from functools import partial
 from pathlib import Path, PurePosixPath
 from typing import IO
 
+from . import N_, _, ngettext
+
 ARCH = "lin-x64"
 RACK_ABI_MAJOR = 2
 RACK_DIR = Path(os.environ.get("RACK_USER_DIR", Path.home() / ".local/share/Rack2"))
@@ -30,6 +32,10 @@ SLUG_RE = re.compile(r"[A-Za-z0-9_-]+")
 VERSION_RE = re.compile(r"\d+(\.\d+)*")
 ZSTD_MAGIC = b"\x28\xb5\x2f\xfd"
 CHUNK = 1 << 20
+FLATPAK = Path("/.flatpak-info").exists()
+# Finds the Rack executable; a shell script so that it can also run on the host from inside the Flatpak sandbox.
+FIND_RACK = r'''for p in "$RACK_EXECUTABLE" "$(command -v Rack)" ~/Rack2*/Rack ~/Applications/Rack2*/Rack ~/.local/opt/Rack2*/Rack /opt/Rack2*/Rack
+do [ -f "$p" ] && [ -x "$p" ] && printf %s "$p" && exit; done; exit 1'''
 
 Progress = Callable[[str, int, int], None]
 
@@ -45,15 +51,15 @@ class Level(enum.IntEnum):
 
 
 class Action(enum.Enum):
-    INSTALL = "new install"
-    UPGRADE = "upgrade"
-    DOWNGRADE = "downgrade"
-    SAME = "already installed"
-    SAME_DIFFERS = "same version, different files"
+    INSTALL = N_("new install")
+    UPGRADE = N_("upgrade")
+    DOWNGRADE = N_("downgrade")
+    SAME = N_("already installed")
+    SAME_DIFFERS = N_("same version, different files")
 
 
 def version_key(v: str):
-    core, _, pre = v.split("+", 1)[0].partition("-")
+    core, _sep, pre = v.split("+", 1)[0].partition("-")
     nums = tuple(int(n) for n in re.findall(r"\d+", core))
     return nums + (0,) * (3 - len(nums)), (1,) if not pre else (0, pre)
 
@@ -79,9 +85,9 @@ def _unzstd(src: IO[bytes], dst: IO[bytes]):
     try:
         subprocess.run(["zstd", "-dcq"], stdin=src, stdout=dst, stderr=subprocess.PIPE, check=True)
     except FileNotFoundError:
-        raise PackageError("zstd archives need Python 3.14+, the 'zstandard' module or the zstd command") from None
+        raise PackageError(_("zstd archives need Python 3.14+, the 'zstandard' module or the zstd command")) from None
     except subprocess.CalledProcessError as e:
-        raise PackageError(f"zstd: {e.stderr.decode().strip()}") from None
+        raise PackageError(_("zstd: {error}").format(error=e.stderr.decode().strip())) from None
 
 
 @dataclass
@@ -104,7 +110,7 @@ class Package:
             raise
         except Exception as e:
             self.close()
-            raise PackageError(f"unreadable archive: {e}") from e
+            raise PackageError(_("unreadable archive: {error}").format(error=e)) from e
 
     def __enter__(self):
         return self
@@ -135,7 +141,7 @@ class Package:
             try:
                 tf = self._stack.enter_context(tarfile.open(self.path))
             except tarfile.ReadError:
-                raise PackageError("not a zip, tar or tar.zst archive") from None
+                raise PackageError(_("not a zip, tar or tar.zst archive")) from None
         for m in tf.getmembers():
             kind = "file" if m.isfile() else "dir" if m.isdir() else "other"
             yield m.name, kind, m.mode & 0o777, m.size, partial(tf.extractfile, m)
@@ -145,11 +151,11 @@ class Package:
         for name, kind, mode, size, opener in self._members():
             p = PurePosixPath(name)
             if p.is_absolute() or ".." in p.parts:
-                raise PackageError(f"unsafe path in archive: {name}")
+                raise PackageError(_("unsafe path in archive: {name}").format(name=name))
             if not p.parts:
                 continue
             if kind == "other":
-                raise PackageError(f"unsupported archive entry (link or device): {name}")
+                raise PackageError(_("unsupported archive entry (link or device): {name}").format(name=name))
             if kind == "dir":
                 dirs.add(str(p))
             else:
@@ -161,7 +167,7 @@ class Package:
             tops = {k.split("/", 1)[0] for k in files}
             root = tops.pop() if len(tops) == 1 else ""
             if f"{root}/plugin.json" not in files:
-                raise PackageError("no plugin.json in package")
+                raise PackageError(_("no plugin.json in package"))
         cut = len(root) + 1 if root else 0
         self.root = root
         self.files = {k[cut:]: e for k, e in files.items()}
@@ -170,12 +176,12 @@ class Package:
         try:
             manifest = json.loads(self.read("plugin.json"))
         except ValueError as e:
-            raise PackageError(f"plugin.json is not valid JSON: {e}") from None
+            raise PackageError(_("plugin.json is not valid JSON: {error}").format(error=e)) from None
         slug, version = manifest.get("slug"), manifest.get("version")
         if not isinstance(slug, str) or not SLUG_RE.fullmatch(slug):
-            raise PackageError(f"plugin.json has an invalid or missing slug: {slug!r}")
+            raise PackageError(_("plugin.json has an invalid or missing slug: {slug!r}").format(slug=slug))
         if not isinstance(version, str) or not VERSION_RE.match(version):
-            raise PackageError(f"plugin.json has an invalid or missing version: {version!r}")
+            raise PackageError(_("plugin.json has an invalid or missing version: {version!r}").format(version=version))
         self.manifest, self.slug, self.version = manifest, slug, version
         self.name = manifest.get("name") or slug
 
@@ -192,15 +198,15 @@ class Package:
 
     def platform_problem(self) -> str | None:
         if foreign := [n for n in ("plugin.dll", "plugin.dylib") if n in self.files]:
-            return f"contains {foreign[0]}: this package is built for another operating system"
+            return _("contains {file}: this package is built for another operating system").format(file=foreign[0])
         if "plugin.so" not in self.files:
-            return "package has no plugin.so"
+            return _("package has no plugin.so")
         with self.files["plugin.so"].open() as f:
             elf = f.read(20)
         if elf[:4] != b"\x7fELF":
-            return "plugin.so is not an ELF shared library"
+            return _("plugin.so is not an ELF shared library")
         if (machine := int.from_bytes(elf[18:20], "little")) != 0x3E:
-            return f"plugin.so is built for another CPU (ELF machine {machine:#x}, need x86-64)"
+            return _("plugin.so is built for another CPU (ELF machine {machine:#x}, need x86-64)").format(machine=machine)
         return None
 
 
@@ -277,14 +283,18 @@ class Diff:
                    sorted(new.keys() - old.keys()), sorted(old.keys() - new.keys()))
 
     def groups(self) -> list[tuple[str, list[str]]]:
-        return [(label, names) for label, names in
-                (("changed", self.changed), ("added", self.added), ("removed", self.removed)) if names]
+        """The non-empty groups as (label, names), labelled like "2 files changed"."""
+        labels = (lambda n: ngettext("{n} file changed", "{n} files changed", n),
+                  lambda n: ngettext("{n} file added", "{n} files added", n),
+                  lambda n: ngettext("{n} file removed", "{n} files removed", n))
+        return [(label(len(names)).format(n=len(names)), names)
+                for label, names in zip(labels, (self.changed, self.added, self.removed), strict=True) if names]
 
     def __bool__(self):
-        return bool(self.groups())
+        return bool(self.changed or self.added or self.removed)
 
     def __str__(self):
-        return ", ".join(f"{len(names)} {label}" for label, names in self.groups()) or "identical"
+        return ", ".join(label for label, names in self.groups()) or _("identical")
 
 
 @dataclass(eq=False)
@@ -323,7 +333,7 @@ class Plan:
         if self.blocked:
             return next(i.text for i in self.issues if i.level is Level.ERROR)
         versions = f"{self.current.version or '?'} → {self.version}" if self.current else self.version
-        return f"{versions} · {self.action.value}"
+        return f"{versions} · {_(self.action.value)}"
 
 
 def analyze(path: Path | str, *, defer: bool = False) -> Plan:
@@ -332,45 +342,51 @@ def analyze(path: Path | str, *, defer: bool = False) -> Plan:
     plan = Plan(path)
     m = NAME_RE.match(path.name)
     if m and m["arch"] != ARCH:
-        plan.add(Level.ERROR, f"built for {m['arch']}, this system needs {ARCH}")
+        plan.add(Level.ERROR, _("built for {arch}, this system needs {need}").format(arch=m["arch"], need=ARCH))
     try:
         with Package(path) as pkg:
             plan.slug, plan.version, plan.name = pkg.slug, pkg.version, pkg.name
             if problem := pkg.platform_problem():
                 plan.add(Level.ERROR, problem)
             if pkg.root != pkg.slug:
-                layout = f"top-level folder {pkg.root!r}" if pkg.root else "no top-level folder"
+                layout = _("top-level folder {folder!r}").format(folder=pkg.root) if pkg.root else _("no top-level folder")
                 if defer:
-                    plan.add(Level.ERROR, f"package has {layout}; Rack would not unpack it into {pkg.slug}/")
+                    plan.add(Level.ERROR, _("package has {layout}; Rack would not unpack it into {slug}/").format(layout=layout, slug=pkg.slug))
                 else:
-                    plan.add(Level.INFO, f"package has {layout}; it will be installed into {pkg.slug}/")
+                    plan.add(Level.INFO, _("package has {layout}; it will be installed into {slug}/").format(layout=layout, slug=pkg.slug))
             new = pkg.digests()
     except (OSError, PackageError) as e:
         plan.add(Level.ERROR, str(e))
         return plan
 
     if not m:
-        plan.add(Level.INFO, f"file name does not follow <slug>-<version>-{ARCH}.vcvplugin")
+        plan.add(Level.INFO, _("file name does not follow <slug>-<version>-{arch}.vcvplugin").format(arch=ARCH))
     elif m["slug"] != plan.slug or m["version"] != plan.version:
-        plan.add(Level.WARN, f"file name says {m['slug']} {m['version']} but plugin.json says {plan.slug} {plan.version}")
+        plan.add(Level.WARN, _("file name says {name_slug} {name_version} but plugin.json says {slug} {version}").format(
+            name_slug=m["slug"], name_version=m["version"], slug=plan.slug, version=plan.version))
     if version_key(plan.version)[0][0] != RACK_ABI_MAJOR:
-        plan.add(Level.WARN, f"version {plan.version} does not start with {RACK_ABI_MAJOR}.; Rack {RACK_ABI_MAJOR} will refuse to load it")
+        plan.add(Level.WARN, _("version {version} does not start with {major}.; Rack {major} will refuse to load it").format(
+            version=plan.version, major=RACK_ABI_MAJOR))
 
     plan.current, plan.pending = find_installed(plan.slug, exclude=path)
     cur = plan.current
     if len(plan.pending) > 1:
-        plan.add(Level.WARN, f"{len(plan.pending)} packages for {plan.slug} are waiting for Rack to unpack them; all will be replaced")
+        n = len(plan.pending)
+        plan.add(Level.WARN, ngettext("{n} package for {slug} is waiting for Rack to unpack it; it will be replaced",
+                                      "{n} packages for {slug} are waiting for Rack to unpack them; all will be replaced", n).format(
+            n=n, slug=plan.slug))
     elif plan.pending:
-        plan.add(Level.INFO, f"replaces {plan.pending[0].path.name}, which was waiting for Rack to unpack it")
+        plan.add(Level.INFO, _("replaces {file}, which was waiting for Rack to unpack it").format(file=plan.pending[0].path.name))
     unpacked = PLUGINS_DIR / plan.slug
     if unpacked.is_symlink():
-        plan.add(Level.WARN, f"installed {plan.slug} is a symlink to {tilde(unpacked.resolve())} (a development checkout?); it will be replaced")
+        plan.add(Level.WARN, _("installed {slug} is a symlink to {target} (a development checkout?); it will be replaced").format(
+            slug=plan.slug, target=tilde(unpacked.resolve())))
 
     if cur is None:
         plan.action = Action.INSTALL
     elif cur.version is None:
         plan.action = Action.INSTALL
-        plan.add(Level.WARN, f"existing {tilde(cur.path)} has no readable version; it will be replaced")
+        plan.add(Level.WARN, _("existing {path} has no readable version; it will be replaced").format(path=tilde(cur.path)))
     else:
         old, new_key = version_key(cur.version), version_key(plan.version)
         plan.action = Action.UPGRADE if new_key > old else Action.DOWNGRADE if new_key < old else Action.SAME
@@ -378,12 +394,14 @@ def analyze(path: Path | str, *, defer: bool = False) -> Plan:
         plan.diff = Diff.of(new, cur.digests())
 
     if plan.action is Action.DOWNGRADE:
-        plan.add(Level.WARN, f"downgrade: installed version {cur.version} is newer than {plan.version}")
+        plan.add(Level.WARN, _("downgrade: installed version {installed} is newer than {version}").format(
+            installed=cur.version, version=plan.version))
     elif plan.action is Action.SAME and plan.diff:
         plan.action = Action.SAME_DIFFERS
-        plan.add(Level.WARN, f"version {plan.version} is already installed but the files differ ({plan.diff}); forgot to bump the version?")
+        plan.add(Level.WARN, _("version {version} is already installed but the files differ ({diff}); forgot to bump the version?").format(
+            version=plan.version, diff=plan.diff))
     elif plan.action is Action.SAME:
-        plan.add(Level.INFO, f"{plan.slug} {plan.version} is already installed with identical files")
+        plan.add(Level.INFO, _("{slug} {version} is already installed with identical files").format(slug=plan.slug, version=plan.version))
     return plan
 
 
@@ -408,7 +426,7 @@ def _extract(plan: Plan, pending: list[Installed], progress: Progress) -> Path:
     target = PLUGINS_DIR / plan.slug
     with Package(plan.source) as pkg, tempfile.TemporaryDirectory(prefix=f".{plan.slug}.", dir=PLUGINS_DIR) as tmp:
         if (pkg.slug, pkg.version) != (plan.slug, plan.version):
-            raise PackageError(f"{plan.source.name} changed since it was inspected")
+            raise PackageError(_("{file} changed since it was inspected").format(file=plan.source.name))
         staged, retired = Path(tmp, "new"), Path(tmp, "old")
         staged.mkdir()
         for d in pkg.dirs:
@@ -452,11 +470,28 @@ def install(plan: Plan, *, defer: bool = False, progress: Progress = lambda name
         raise PackageError(plan.summary)
     with _locked():
         PLUGINS_DIR.mkdir(parents=True, exist_ok=True)
-        _, pending = find_installed(plan.slug, exclude=plan.source)
+        pending = find_installed(plan.slug, exclude=plan.source)[1]
         return (_defer if defer else _extract)(plan, pending, progress)
 
 
+def on_host(*cmd: str, cwd: Path | None = None) -> dict:
+    """subprocess arguments that run cmd on the host: inside the Flatpak sandbox, through flatpak-spawn."""
+    if not FLATPAK:
+        return {"args": list(cmd), "cwd": cwd}
+    env = [f"--env={k}={os.environ[k]}" for k in ("RACK_EXECUTABLE",) if k in os.environ]
+    return {"args": ["flatpak-spawn", "--host", *env, *([f"--directory={cwd}"] if cwd else []), *cmd]}
+
+
+def _host_output(*cmd: str) -> subprocess.CompletedProcess | None:
+    try:
+        return subprocess.run(**on_host(*cmd), stdin=subprocess.DEVNULL, capture_output=True, text=True, timeout=5)
+    except (OSError, subprocess.SubprocessError):
+        return None
+
+
 def rack_running() -> bool:
+    if FLATPAK:  # the sandbox has its own /proc
+        return (r := _host_output("pgrep", "-x", "Rack")) is not None and r.returncode == 0
     for comm in Path("/proc").glob("[0-9]*/comm"):
         with contextlib.suppress(OSError):
             if comm.read_text().strip() == "Rack":
@@ -465,11 +500,10 @@ def rack_running() -> bool:
 
 
 def find_rack() -> Path | None:
-    home = Path.home()
-    candidates = [
-        *([Path(os.environ["RACK_EXECUTABLE"])] if "RACK_EXECUTABLE" in os.environ else []),
-        *([Path(w)] if (w := shutil.which("Rack")) else []),
-        *sorted(home.glob("Rack2*/Rack")), *sorted(home.glob("Applications/Rack2*/Rack")),
-        *sorted(home.glob(".local/opt/Rack2*/Rack")), *sorted(Path("/opt").glob("Rack2*/Rack")),
-    ]
-    return next((p for p in candidates if p.is_file() and os.access(p, os.X_OK)), None)
+    r = _host_output("sh", "-c", FIND_RACK)
+    return Path(r.stdout) if r and r.returncode == 0 else None
+
+
+def start_rack(exe: Path):
+    subprocess.Popen(**on_host(str(exe), cwd=exe.parent), start_new_session=True,
+                     stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)

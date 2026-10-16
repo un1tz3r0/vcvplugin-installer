@@ -2,7 +2,7 @@
 <mime-info xmlns="http://www.freedesktop.org/standards/shared-mime-info">
   <mime-type type="application/x-vcvplugin">
     <comment>VCV Rack plugin package</comment>
-    <icon name="application-x-vcvplugin"/>
+    <icon name="io.github.un1tz3r0.VcvPluginInstaller"/>
     <glob pattern="*.vcvplugin" weight="90"/>
   </mime-type>
 </mime-info>

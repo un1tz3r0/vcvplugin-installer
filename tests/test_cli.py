@@ -1,3 +1,6 @@
+import re
+from pathlib import Path
+
 import pytest
 
 from vcvplugin import __version__, cli
@@ -35,3 +38,10 @@ def test_exit_status_combines(plugins_dir, make_package, install_dir):
     skipped = make_package(slug="Older", version="2.0.0")
     assert cli.main([str(rejected)]) == 1
     assert cli.main([str(rejected), str(skipped)]) == 3
+
+
+def test_man_page_lists_every_option():
+    man = (Path(__file__).parents[1] / "data" / "vcvplugin-install.1").read_text().replace("\\-", "-")
+    section = man[man.index(".SH OPTIONS"):man.index(".SH EXIT STATUS")]
+    documented = set(re.findall(r"(?<![\w-])--?[a-z][\w-]*", section))
+    assert {o for a in cli.parser()._actions for o in a.option_strings} <= documented
