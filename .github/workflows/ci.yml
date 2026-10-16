@@ -71,7 +71,7 @@ jobs:
       - run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends python3-gi gir1.2-gtk-4.0 gir1.2-adw-1 \
-            xvfb xauth fonts-cantarell adwaita-icon-theme
+            librsvg2-common xvfb xauth fonts-cantarell adwaita-icon-theme
       - name: Render (also exercises every page of the GUI)
         run: xvfb-run -a -s "-screen 0 1280x1024x24" /usr/bin/python3 build-aux/screenshots.py
         env:
