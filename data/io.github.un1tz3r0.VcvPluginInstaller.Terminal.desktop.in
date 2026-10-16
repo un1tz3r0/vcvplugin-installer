@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Install VCV Rack Plugin (Terminal)
+Comment=Install VCV Rack 2 plugin packages in a terminal
+Exec=@bindir@/vcvplugin-install --interactive --wait %F
+Icon=io.github.un1tz3r0.VcvPluginInstaller
+Terminal=true
+NoDisplay=true
+MimeType=application/x-vcvplugin;

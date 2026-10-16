@@ -1,0 +1,46 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "vcvplugin-installer"
+dynamic = ["version"]
+description = "Inspect, compare and install VCV Rack 2 plugin packages (.vcvplugin) from the command line or a GTK 4 app"
+readme = "README.md"
+license = "GPL-3.0-or-later"
+authors = [{ name = "Victor Condino", email = "un1tz3r0@gmail.com" }]
+requires-python = ">=3.11"
+keywords = ["vcv", "rack", "vcvrack", "plugin", "modular", "synthesizer", "gtk", "libadwaita"]
+classifiers = [
+    "Environment :: Console",
+    "Environment :: X11 Applications :: GTK",
+    "Intended Audience :: End Users/Desktop",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Multimedia :: Sound/Audio",
+    "Topic :: System :: Software Distribution",
+]
+dependencies = []
+
+[project.optional-dependencies]
+gui = ["PyGObject>=3.42"]
+zstd = ["zstandard; python_version < '3.14'"]
+
+[project.scripts]
+vcvplugin-install = "vcvplugin.cli:run"
+
+[project.gui-scripts]
+vcvplugin-gui = "vcvplugin.gui:run"
+
+[project.urls]
+Homepage = "https://github.com/un1tz3r0/vcvplugin-installer"
+Issues = "https://github.com/un1tz3r0/vcvplugin-installer/issues"
+
+# The version is defined once, in meson.build.
+[tool.hatch.version]
+path = "meson.build"
+pattern = "^\\s*version: '(?P<version>[^']+)'"
+
+[tool.hatch.build.targets.wheel]
+packages = ["vcvplugin"]

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.un1tz3r0.VcvPluginInstaller</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+
+  <name>VCV Rack Plugin Installer</name>
+  <summary>Install and upgrade VCV Rack 2 plugin packages</summary>
+  <developer id="io.github.un1tz3r0">
+    <name>Victor Condino</name>
+  </developer>
+
+  <description>
+    <p>
+      VCV Rack 2 unpacks .vcvplugin packages from its plugins folder the next time it starts, without
+      saying what changed. This installer checks each package first, shows what installing it will do,
+      and unpacks it right away.
+    </p>
+    <ul>
+      <li>Rejects packages built for another operating system or CPU, or without a valid plugin.json</li>
+      <li>Shows whether each package is a new install, an upgrade or a downgrade</li>
+      <li>Warns when the same version is already installed with different files</li>
+      <li>Replaces older packages that are still waiting for Rack to unpack them</li>
+    </ul>
+    <p>
+      Plugins are unpacked into a staging folder and then swapped into place, so an interrupted install
+      does not leave a half-written plugin behind. The vcvplugin-install command does the same from a
+      terminal.
+    </p>
+  </description>
+
+  <launchable type="desktop-id">io.github.un1tz3r0.VcvPluginInstaller.desktop</launchable>
+  <provides>
+    <binary>vcvplugin-gui</binary>
+    <binary>vcvplugin-install</binary>
+    <mediatype>application/x-vcvplugin</mediatype>
+  </provides>
+
+  <url type="homepage">https://github.com/un1tz3r0/vcvplugin-installer</url>
+  <url type="bugtracker">https://github.com/un1tz3r0/vcvplugin-installer/issues</url>
+  <url type="vcs-browser">https://github.com/un1tz3r0/vcvplugin-installer</url>
+
+  <content_rating type="oars-1.1"/>
+</component>
