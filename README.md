@@ -126,24 +126,7 @@ python3 -m vcvplugin.gui      # GUI
 | `build-aux/screenshots.py` | renders `data/screenshots/` from a scripted GUI run |
 | `build-aux/release-notes.py` | prints the metainfo release notes for the current version |
 
-```sh
-uv run pytest                                  # tests (or: python3 -m pytest)
-xvfb-run -a python3 build-aux/screenshots.py   # regenerate the screenshots (drop xvfb-run to watch it)
-uv build                                       # sdist and wheel
-```
-
-When adding a module to `vcvplugin/`, also list it in `meson.build`.
-
-### Every pull request bumps the version
-
-1. Bump `vcvplugin/VERSION`.
-2. Add a `<release>` for it, with notes, at the top of `<releases>` in
-   `data/io.github.un1tz3r0.VcvPluginInstaller.metainfo.xml`.
-
-CI fails a pull request whose version is already tagged or has no release notes. When it is merged, the Release
-workflow tags the commit `vX.Y.Z` and publishes a GitHub release with those notes and the sdist and wheel.
-
-CI also renders the screenshots and uploads them as a build artifact; when the UI changes, commit the new ones.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for running the tests, the version-bump rule and the release process.
 
 ## License
 
