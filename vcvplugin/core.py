@@ -15,10 +15,11 @@ import subprocess
 import tarfile
 import tempfile
 import zipfile
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from functools import partial
 from pathlib import Path, PurePosixPath
-from typing import IO, Callable
+from typing import IO
 
 ARCH = "lin-x64"
 RACK_ABI_MAJOR = 2

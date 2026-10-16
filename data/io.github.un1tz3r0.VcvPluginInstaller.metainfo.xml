@@ -60,6 +60,16 @@
 
   <!-- Every pull request adds a release here and bumps vcvplugin/VERSION; merging it tags and publishes the release. -->
   <releases>
+    <release version="0.1.1" date="2026-10-16">
+      <description>
+        <p>Housekeeping release.</p>
+        <ul>
+          <li>The desktop entry lists only the Audio category, so the app appears once in application menus</li>
+          <li>Contributing and security policy documents</li>
+          <li>Code style checked with ruff in CI</li>
+        </ul>
+      </description>
+    </release>
     <release version="0.1.0" date="2026-10-16">
       <description>
         <p>First release.</p>

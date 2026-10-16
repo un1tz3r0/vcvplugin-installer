@@ -6,6 +6,6 @@ Exec=@bindir@/vcvplugin-gui %F
 Icon=io.github.un1tz3r0.VcvPluginInstaller
 Terminal=false
 StartupNotify=true
-Categories=AudioVideo;Audio;Utility;
+Categories=AudioVideo;Audio;
 Keywords=VCV;Rack;plugin;modular;
 MimeType=application/x-vcvplugin;
