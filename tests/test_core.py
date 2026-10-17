@@ -1,4 +1,5 @@
 import zipfile
+from pathlib import Path
 
 import pytest
 from conftest import ELF_X64, zstd_available
@@ -183,3 +184,30 @@ def test_install_reports_progress(plugins_dir, make_package):
     core.install(core.analyze(pkg), progress=lambda name, done, total: calls.append((done, total)))
     with core.Package(pkg) as p:
         assert calls[-1] == (sum(e.size for e in p.files.values()),) * 2
+
+
+def test_on_host_through_flatpak_spawn(monkeypatch):
+    rack = Path("/opt/Rack2Free")
+    monkeypatch.setattr(core, "FLATPAK", False)
+    assert core.on_host("Rack", cwd=rack) == {"args": ["Rack"], "cwd": rack}
+    monkeypatch.setattr(core, "FLATPAK", True)
+    monkeypatch.setenv("RACK_EXECUTABLE", "/x/Rack")
+    assert core.on_host("Rack", cwd=rack) == {
+        "args": ["flatpak-spawn", "--host", "--env=RACK_EXECUTABLE=/x/Rack", f"--directory={rack}", "Rack"]}
+
+
+def test_find_rack(tmp_path, monkeypatch):
+    monkeypatch.setattr(core, "FLATPAK", False)
+    monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.setenv("PATH", "/usr/bin:/bin")
+    monkeypatch.delenv("RACK_EXECUTABLE", raising=False)
+    found = core.find_rack()
+    assert found is None or found.is_relative_to("/opt")
+    for name in ("Rack2Free", "Rack2Pro"):
+        exe = tmp_path / name / "Rack"
+        exe.parent.mkdir()
+        exe.write_text("#!/bin/sh\n")
+        exe.chmod(0o755)
+    assert core.find_rack() == tmp_path / "Rack2Free" / "Rack"
+    monkeypatch.setenv("RACK_EXECUTABLE", str(exe))
+    assert core.find_rack() == tmp_path / "Rack2Pro" / "Rack"

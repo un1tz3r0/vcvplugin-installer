@@ -1,0 +1,104 @@
+.TH VCVPLUGIN-INSTALL 1 2026-10-16 "vcvplugin-installer" "User Commands"
+.SH NAME
+vcvplugin-install \- inspect, compare and install VCV Rack 2 plugin packages
+.SH SYNOPSIS
+.B vcvplugin-install
+.RI [ options ]
+.IR PACKAGE .vcvplugin " ..."
+.SH DESCRIPTION
+VCV Rack unpacks
+.I .vcvplugin
+packages from its plugins folder the next time it starts, without saying what changed.
+.B vcvplugin-install
+checks each package first, reports what installing it will do, and unpacks it right away.
+.PP
+A package is rejected when it is built for another operating system or CPU, or has no valid
+.IR plugin.json .
+Each accepted package is reported as a new install, an upgrade, a downgrade, or the version already installed.
+Downgrades, same-version packages with different files, and other warnings need confirmation; see
+.B \-\-yes
+and
+.BR \-\-interactive .
+.PP
+Plugins are unpacked into a staging folder and then swapped into place, so an interrupted install leaves no
+half-written plugin. Older packages for the same plugin that are still waiting for Rack to unpack them are removed,
+so Rack does not unpack them over the new install.
+.SH OPTIONS
+.TP
+.BR \-y ", " \-\-yes
+Proceed past warnings (downgrades, same-version rebuilds, ...).
+.TP
+.BR \-i ", " \-\-interactive
+Ask before proceeding past warnings.
+.TP
+.B \-\-reinstall
+Install even when the identical version is already installed.
+.TP
+.B \-\-defer
+Copy the package for Rack to unpack on its next start instead of unpacking now.
+.TP
+.BR \-n ", " \-\-dry\-run
+Only report what would happen.
+.TP
+.BR \-q ", " \-\-quiet
+Only report problems.
+.TP
+.B \-\-wait
+Wait for Enter before exiting, for terminal launchers.
+.TP
+.B \-\-version
+Print the version and exit.
+.TP
+.BR \-h ", " \-\-help
+Print a summary of the options and exit.
+.SH EXIT STATUS
+.TP
+.B 0
+Every package was installed, or was already installed.
+.TP
+.B 1
+Some package failed to install or was rejected.
+.TP
+.B 2
+Some package was skipped because it needs confirmation.
+.TP
+.B 3
+Both 1 and 2.
+.SH ENVIRONMENT
+.TP
+.B RACK_USER_DIR
+Rack's user folder; plugins are installed into its
+.I plugins\-lin\-x64
+folder. Default:
+.IR ~/.local/share/Rack2 .
+.TP
+.B RACK_EXECUTABLE
+The Rack executable started by the GUI's
+.I Start Rack2
+button. Default: the first of
+.B Rack
+on
+.BR PATH ,
+.IR ~/Rack2*/Rack ,
+.IR ~/Applications/Rack2*/Rack ,
+.IR ~/.local/opt/Rack2*/Rack " and"
+.IR /opt/Rack2*/Rack .
+.SH EXAMPLES
+Install a downloaded plugin, asking before a downgrade:
+.PP
+.RS
+.B vcvplugin-install \-i ~/Downloads/Fundamental-2.6.4-lin-x64.vcvplugin
+.RE
+.PP
+See what installing every package in a folder would do:
+.PP
+.RS
+.B vcvplugin-install \-n ~/Downloads/*.vcvplugin
+.RE
+.SH SEE ALSO
+.B vcvplugin-gui
+is the graphical installer, which opens
+.I .vcvplugin
+files from the file manager.
+.PP
+https://github.com/un1tz3r0/vcvplugin-installer

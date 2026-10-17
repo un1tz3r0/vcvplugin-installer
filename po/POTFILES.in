@@ -1,0 +1,6 @@
+data/io.github.un1tz3r0.VcvPluginInstaller.desktop.in
+data/io.github.un1tz3r0.VcvPluginInstaller.metainfo.xml
+data/io.github.un1tz3r0.VcvPluginInstaller.Terminal.desktop.in
+vcvplugin/cli.py
+vcvplugin/core.py
+vcvplugin/gui.py

@@ -23,23 +23,44 @@ uv run ruff check .                            # lint; `ruff check --fix .` fixe
 meson setup _build && meson test -C _build     # validates the desktop entries and AppStream metainfo
 uv build                                       # sdist and wheel
 xvfb-run -a python3 build-aux/screenshots.py   # renders data/screenshots/ (drop xvfb-run to watch it)
+flatpak-builder --force-clean _flatpak build-aux/flatpak/io.github.un1tz3r0.VcvPluginInstaller.yml
 ```
 
 `core` has no GUI dependencies; put logic there with tests, and keep `cli.py` and `gui.py` thin. When adding a
 module to `vcvplugin/`, also list it in `meson.build`.
 
-The screenshots job uploads its renders as a build artifact. When your change affects the UI, download them from
-the CI run and commit them to `data/screenshots/`.
+Anything that runs on the host, such as starting Rack, goes through `core.on_host()`, so that it also works from
+inside the Flatpak sandbox.
+
+The screenshots job renders each page in light and dark mode and uploads them as a build artifact. When your
+change affects the UI, download them from the CI run and commit them to `data/screenshots/`.
+
+## Translations
+
+Wrap user-visible strings in `_()` (or `ngettext()` for counts), with `{name}` placeholders filled in by
+`.format()` afterwards, never an f-string, so that `xgettext` can extract them. Strings that are defined in one
+place and shown in another are marked with `N_()` and translated with `_()` where they are shown.
+
+To add a language, add its code to `po/LINGUAS`, then:
+
+```sh
+meson setup _build && meson compile -C _build vcvplugin-installer-update-po   # creates or updates po/*.po
+```
+
+Translate the new `po/<code>.po` and check it with `msgfmt -c -o /dev/null po/<code>.po`. Run the same
+`update-po` command after changing strings, so that every `.po` file has them.
 
 ## Every pull request bumps the version
 
 1. Bump `vcvplugin/VERSION`: the patch number for fixes and housekeeping, the minor number for new features.
 2. Add a `<release>` for it, with notes, at the top of `<releases>` in
-   `data/io.github.un1tz3r0.VcvPluginInstaller.metainfo.xml`. `build-aux/release-notes.py` prints them as
-   Markdown and fails if they are missing.
+   `data/io.github.un1tz3r0.VcvPluginInstaller.metainfo.xml`. Give its `<description>` a `translate="no"`, so that
+   translators aren't asked to translate release notes. `build-aux/release-notes.py` prints them as Markdown and
+   fails if they are missing.
 
 CI fails a pull request whose version is already tagged or has no release notes. When it is merged, the Release
-workflow tags the commit `vX.Y.Z` and publishes a GitHub release with those notes, the sdist and the wheel.
+workflow tags the commit `vX.Y.Z` and publishes a GitHub release with those notes, the sdist, the wheel and a
+Flatpak bundle.
 
 ## License
 

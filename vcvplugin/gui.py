@@ -1,5 +1,4 @@
 """GTK 4 / libadwaita wizard for installing VCV Rack 2 plugin packages."""
-import subprocess
 import sys
 import threading
 import time
@@ -11,11 +10,11 @@ gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 from gi.repository import Adw, Gdk, Gio, GLib, Gtk  # noqa: E402
 
-from . import __version__, core  # noqa: E402
+from . import _, __version__, core, ngettext  # noqa: E402
 from .core import Action, Level  # noqa: E402
 
 APP_ID = "io.github.un1tz3r0.VcvPluginInstaller"
-APP_NAME = "VCV Rack Plugin Installer"
+APP_NAME = _("VCV Rack Plugin Installer")
 WEBSITE = "https://github.com/un1tz3r0/vcvplugin-installer"
 OK_ICON = "object-select-symbolic"
 LEVEL_ICON = {Level.INFO: "dialog-information-symbolic", Level.WARN: "dialog-warning-symbolic",
@@ -40,8 +39,7 @@ def row(title: str, subtitle: str = "", icon: str | None = None) -> Adw.ActionRo
 def detail_rows(plan: core.Plan):
     yield from (row(i.text, icon=LEVEL_ICON[i.level]) for i in plan.issues)
     for label, names in plan.diff.groups() if plan.diff else ():
-        yield row(f"{len(names)} file{'s' * (len(names) != 1)} {label}",
-                  ", ".join(names[:5]) + (" …" if len(names) > 5 else ""), "document-edit-symbolic")
+        yield row(label, ", ".join(names[:5]) + (" …" if len(names) > 5 else ""), "document-edit-symbolic")
 
 
 def group(rows, **props) -> Adw.PreferencesGroup:
@@ -85,10 +83,10 @@ class Wizard(Adw.ApplicationWindow):
         view = Adw.ToolbarView(content=self.stack)
         header = Adw.HeaderBar(title_widget=self.heading)
         menu = Gio.Menu()
-        menu.append(f"About {APP_NAME}", "app.about")
-        header.pack_end(Gtk.MenuButton(icon_name="open-menu-symbolic", menu_model=menu, primary=True, tooltip_text="Main Menu"))
+        menu.append(_("About {app}").format(app=APP_NAME), "app.about")
+        header.pack_end(Gtk.MenuButton(icon_name="open-menu-symbolic", menu_model=menu, primary=True, tooltip_text=_("Main Menu")))
         view.add_top_bar(header)
-        view.add_top_bar(Adw.Banner(title="VCV Rack is running. Restart it after installing to load the new plugins.",
+        view.add_top_bar(Adw.Banner(title=_("VCV Rack is running. Restart it after installing to load the new plugins."),
                                     revealed=core.rack_running()))
         self.set_content(view)
         if paths:
@@ -106,19 +104,21 @@ class Wizard(Adw.ApplicationWindow):
         threading.Thread(target=lambda: GLib.idle_add(then, work()), daemon=True).start()
 
     def choose(self):
-        content = status("package-x-generic-symbolic", "Install VCV Rack Plugins",
-                         "Choose .vcvplugin packages, or drop them here.")
+        icon = f"{APP_ID}-symbolic"
+        if not Gtk.IconTheme.get_for_display(self.get_display()).has_icon(icon):  # running from a checkout
+            icon = "package-x-generic-symbolic"
+        content = status(icon, _("Install VCV Rack Plugins"), _("Choose .vcvplugin packages, or drop them here."))
         drop = Gtk.DropTarget.new(Gdk.FileList, Gdk.DragAction.COPY)
         drop.connect("drop", lambda _t, files, _x, _y: self.inspect([Path(f.get_path()) for f in files.get_files() if f.get_path()]) or True)
         content.add_controller(drop)
-        self.show("Choose packages", page(content, ("Choose Packages…", "suggested-action", self.open_dialog))[0])
+        self.show(_("Choose packages"), page(content, (_("Choose Packages…"), "suggested-action", self.open_dialog))[0])
 
     def open_dialog(self):
-        pattern = Gtk.FileFilter(name="VCV Rack plugin packages")
+        pattern = Gtk.FileFilter(name=_("VCV Rack plugin packages"))
         pattern.add_pattern("*.vcvplugin")
         filters = Gio.ListStore.new(Gtk.FileFilter)
         filters.append(pattern)
-        dialog = Gtk.FileDialog(title="Choose Plugin Packages", filters=filters)
+        dialog = Gtk.FileDialog(title=_("Choose Plugin Packages"), filters=filters)
 
         def chosen(_dialog, result):
             try:
@@ -134,12 +134,12 @@ class Wizard(Adw.ApplicationWindow):
             return
         spinner = Adw.Spinner() if hasattr(Adw, "Spinner") else Gtk.Spinner(spinning=True)
         spinner.set_size_request(48, 48)
-        self.show("Inspecting", page(status(None, "Inspecting Packages…", child=spinner))[0])
+        self.show(_("Inspecting"), page(status(None, _("Inspecting Packages…"), child=spinner))[0])
         self.background(lambda: [core.analyze(p) for p in paths], self.review)
 
     def review(self, plans: list[core.Plan]):
         if all(p.blocked for p in plans):
-            return self.finish(False, "Cannot Install", "", [row(p.title, p.summary, plan_icon(p)) for p in plans])
+            return self.finish(False, _("Cannot Install"), "", [row(p.title, p.summary, plan_icon(p)) for p in plans])
         checks, rows = [], []
         for plan in plans:
             details = list(detail_rows(plan))
@@ -153,17 +153,17 @@ class Wizard(Adw.ApplicationWindow):
             checks.append((plan, check))
             rows.append(r)
         prefs = Adw.PreferencesPage()
-        prefs.add(group(rows, title="Packages", description=f"Installing into {core.tilde(core.PLUGINS_DIR)}"))
-        box, (_, install) = page(prefs, ("Cancel", None, self.close),
-                                 ("Install", "suggested-action", lambda: self.confirm([p for p, c in checks if c.get_active()])))
+        prefs.add(group(rows, title=_("Packages"), description=_("Installing into {folder}").format(folder=core.tilde(core.PLUGINS_DIR))))
+        box, (_cancel, install) = page(prefs, (_("Cancel"), None, self.close),
+                                      (_("Install"), "suggested-action", lambda: self.confirm([p for p, c in checks if c.get_active()])))
 
-        def sync(*_):
-            install.set_sensitive(any(c.get_active() for _, c in checks))
+        def sync(*_args):
+            install.set_sensitive(any(c.get_active() for _plan, c in checks))
 
-        for _, c in checks:
+        for _plan, c in checks:
             c.connect("toggled", sync)
         sync()
-        self.show("Review", box)
+        self.show(_("Review"), box)
 
     def confirm(self, todo: list[core.Plan], approved: tuple = ()):
         """Walk the selection, stopping at a confirmation page for each plan with warnings."""
@@ -172,13 +172,14 @@ class Wizard(Adw.ApplicationWindow):
         if not todo:
             if approved:
                 return self.install(list(approved))
-            return self.finish(None, "Nothing Installed", "Every package was skipped.", [])
+            return self.finish(None, _("Nothing Installed"), _("Every package was skipped."), [])
         plan, rest = todo[0], todo[1:]
-        title = {Action.DOWNGRADE: f"Downgrade {plan.title}?",
-                 Action.SAME_DIFFERS: f"Overwrite {plan.title} {plan.version}?"}.get(plan.action, f"Install {plan.title} Anyway?")
-        content = status("dialog-warning-symbolic", title, plan.summary, group(detail_rows(plan)))
-        self.show("Confirm", page(content, ("Skip", None, lambda: self.confirm(rest, approved)),
-                                  ("Install Anyway", "destructive-action", lambda: self.confirm(rest, (*approved, plan))))[0])
+        title = {Action.DOWNGRADE: _("Downgrade {plugin}?"),
+                 Action.SAME_DIFFERS: _("Overwrite {plugin} {version}?")}.get(plan.action, _("Install {plugin} Anyway?"))
+        content = status("dialog-warning-symbolic", title.format(plugin=plan.title, version=plan.version), plan.summary,
+                         group(detail_rows(plan)))
+        self.show(_("Confirm"), page(content, (_("Skip"), None, lambda: self.confirm(rest, approved)),
+                                     (_("Install Anyway"), "destructive-action", lambda: self.confirm(rest, (*approved, plan))))[0])
 
     def install(self, plans: list[core.Plan]):
         bar = Gtk.ProgressBar(show_text=True)
@@ -187,10 +188,11 @@ class Wizard(Adw.ApplicationWindow):
         buffer = log.get_buffer()
         end = buffer.create_mark(None, buffer.get_end_iter(), False)
         content = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=18, margin_top=24, margin_start=24, margin_end=24)
-        content.append(Gtk.Label(label=f"Installing {len(plans)} plugin{'s' * (len(plans) != 1)}", css_classes=["title-2"]))
+        title = ngettext("Installing {n} plugin", "Installing {n} plugins", len(plans)).format(n=len(plans))
+        content.append(Gtk.Label(label=title, css_classes=["title-2"]))
         content.append(bar)
         content.append(Gtk.ScrolledWindow(child=log, vexpand=True, css_classes=["card"]))
-        self.show("Installing", page(content)[0])
+        self.show(_("Installing"), page(content)[0])
 
         def append(text):
             buffer.insert(buffer.get_end_iter(), text + "\n")
@@ -217,37 +219,37 @@ class Wizard(Adw.ApplicationWindow):
                     results.append((plan, core.install(plan, progress=progress), None))
                 except Exception as e:
                     results.append((plan, None, e))
-                    GLib.idle_add(append, f"error: {e}")
+                    GLib.idle_add(append, _("error: {text}").format(text=e))
             return results
 
         self.background(work, self.done)
 
     def done(self, results):
         ok = [row(p.title, f"{p.version} → {core.tilde(dest)}", OK_ICON) for p, dest, e in results if not e]
-        failed = [row(p.title, str(e), LEVEL_ICON[Level.ERROR]) for p, _, e in results if e]
+        failed = [row(p.title, str(e), LEVEL_ICON[Level.ERROR]) for p, _dest, e in results if e]
         if not ok:
-            return self.finish(False, "Installation Failed", "No plugins were installed.", failed)
+            return self.finish(False, _("Installation Failed"), _("No plugins were installed."), failed)
         running = core.rack_running()
-        self.finish(True, f"Plugin{'s' * (len(ok) > 1)} Installed",
-                    "Restart VCV Rack to load the new plugins." if running else "Start VCV Rack to use the new plugins.",
+        self.finish(True, ngettext("Plugin Installed", "Plugins Installed", len(ok)),
+                    _("Restart VCV Rack to load the new plugins.") if running else _("Start VCV Rack to use the new plugins."),
                     ok + failed)
 
     def finish(self, success: bool | None, title: str, description: str, rows: list[Adw.ActionRow]):
         icon = {True: "emblem-ok-symbolic", False: "dialog-error-symbolic", None: "dialog-information-symbolic"}[success]
         content = status(icon, title, description, group(rows) if rows else None)
         if not success:
-            return self.show("Failed" if success is False else "Done", page(content, ("Close", "suggested-action", self.close))[0])
+            return self.show(_("Failed") if success is False else _("Done"),
+                             page(content, (_("Close"), "suggested-action", self.close))[0])
         rack, running = core.find_rack(), core.rack_running()
-        box, (_, start) = page(content, ("Close", None, self.close), ("Start Rack2", "suggested-action", lambda: self.start_rack(rack)))
+        box, (_close, start) = page(content, (_("Close"), None, self.close), (_("Start Rack2"), "suggested-action", lambda: self.start_rack(rack)))
         if rack is None or running:
             start.set_sensitive(False)
-            start.set_tooltip_text("VCV Rack is already running" if running else
-                                   "Rack executable not found; set RACK_EXECUTABLE or put Rack on PATH")
-        self.show("Done", box)
+            start.set_tooltip_text(_("VCV Rack is already running") if running else
+                                   _("Rack executable not found; set RACK_EXECUTABLE or put Rack on PATH"))
+        self.show(_("Done"), box)
 
     def start_rack(self, exe: Path):
-        subprocess.Popen([exe], cwd=exe.parent, start_new_session=True,
-                         stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        core.start_rack(exe)
         self.close()
 
 
@@ -265,6 +267,9 @@ class App(Adw.Application):
         props = dict(application_name=APP_NAME, application_icon=APP_ID, developer_name="Victor Condino", version=__version__,
                      website=WEBSITE, issue_url=f"{WEBSITE}/issues", license_type=Gtk.License.GPL_3_0,
                      copyright="© 2026 Victor Condino")
+        # Translators: your name, and optionally your email address, one translator per line
+        if (credits := _("translator-credits")) != "translator-credits":
+            props["translator_credits"] = credits
         if hasattr(Adw, "AboutDialog"):  # libadwaita 1.5+
             Adw.AboutDialog(**props).present(self.get_active_window())
         else:
